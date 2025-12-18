@@ -7,14 +7,15 @@ library(fattvpVAR)
 library(profvis)
 library(invgamma)
 
-Data_AUS <- read_excel("Data AUS.xlsx", sheet = "Q")
+#Data_AUS <- read_excel("Data AUS.xlsx", sheet = "Q")
+Data_AUS <- read_excel("Data251207.xlsx", sheet = "Q")
 
-vars::VARselect(y = Data_AUS[2:113,2:4], lag.max = 10)
+vars::VARselect(y = Data_AUS[2:115,2:4], lag.max = 10)
 
 K <- 3 # 3 series
 p <- 2 # number of lags
 
-dataraw <- Data_AUS[2:113,2:4]
+dataraw <- Data_AUS[2:115,2:4]
 dataraw[,1] <- dataraw[,1] /100
 
 y <- data.matrix(dataraw[(p+1):nrow(dataraw),])
@@ -23,19 +24,19 @@ priors <- get_prior_minnesota(y = y, p = p, intercept=TRUE)
 
 ####################
 #Tight prior
-priors$b0[2] = 0.8
-priors$b0[10] = 0.6
+priors$b0[2] = 0.9
+priors$b0[10] = 0.9
 priors$b0[18] = 0 # gdp growth
 
 B0 <- t(matrix(priors$b0, ncol = K))
-B0[,1] <- c(0.2,2,0.5) #/ c(0.2, 0.4, 1)
+B0[,1] <- c(0.1,0.5,0.0) #/ c(0.2, 0.4, 1)
 priors$b0 <- as.numeric(t(B0))
 
 lambda1 <- 0.2
 lambda2 <- 0.5
 lambda2a <- 0.05
 lambda3 <- 1
-lambda4 <- 1
+lambda4 <- 10
 
 sigmasq <- rep(0, K)
 for (ii in 1:K) {
@@ -69,6 +70,10 @@ for (jj in 1:p) { # lag
 V_b_prior = as.numeric(t(matrix(Vi, nrow = K)))
 
 priors$V_b_prior <- V_b_prior
+priors$V_a0_prior <- rep(0.01,length(priors$a0))
+priors$hyper_ab <- list(hyper_a = rep(0.0001, 3),
+                        hyper_b = rep(0.0001,21))
+
 #################################
 inits <- list(samples = 100000, burnin = 20000, thin = 20)
 RhpcBLASctl::blas_set_num_threads(2)
@@ -135,6 +140,10 @@ setwd("/home/hoanguc3m/Downloads/htvpAU")
   save(T111_obj, file = "T111.RData")
 }
 
+###############################################
+setwd("/home/hoanguc3m/Downloads/htvpAU")
+load("T111.RData")
+load("T000.RData")
 
 ####################################
 
@@ -144,7 +153,7 @@ library(cowplot)
 library(ggthemr)
 ggthemr('light')
 
-Time <- seq(as.Date("1997/06/01"), as.Date("2025/03/01"), "quarter")
+Time <- seq(as.Date("1997/06/01"), as.Date("2025/09/01"), "quarter")
 recessions.df = read.table(textConnection(
   "Peak, Trough
   2001-03-01, 2001-11-01
@@ -173,10 +182,6 @@ plot_grid(p1, p2, p3, ncol = 1, align = "v")
 dev.off()
 
 
-###############################################
-setwd("/home/hoanguc3m/Downloads/htvpAU")
-load("T111.RData")
-load("T000.RData")
 
 library(gridExtra)
 library(ggthemr)
@@ -295,7 +300,7 @@ ab111_q90 <- cbind( apply(get_post(T111_obj,element = "beta"), MARGIN = c(2,3), 
                     apply(get_post(T111_obj,element = "alpha"), MARGIN = c(2,3), FUN = quantile, probs = c(0.9)))
 
 gg_TVPAB_mat <- function(i){
-  Time <- tail(seq(as.Date("1997/06/01"), as.Date("2025/03/01"), "quarter"), nrow(ab111_mean))
+  Time <- tail(seq(as.Date("1997/06/01"), as.Date("2025/09/01"), "quarter"), nrow(ab111_mean))
 
   data_nu <- data.frame(Time = Time, AB_mean = ab111_mean[,i])
 
@@ -311,7 +316,7 @@ gg_TVPAB_mat <- function(i){
 varname <- parse(text = c("Intercept", "e[t-1]", "u[t-1]", "g[t-1]", "e[t-2]", "u[t-2]", "g[t-2]",
                           "Intercept", "e[t-1]", "u[t-1]", "g[t-1]", "e[t-2]", "u[t-2]", "g[t-2]",
                           "Intercept", "e[t-1]", "u[t-1]", "g[t-1]", "e[t-2]", "u[t-2]", "g[t-2]",
-                          "a[21,t]", "a[31,t]", "g[32,t]"))
+                          "a[21,t]", "a[31,t]", "a[32,t]"))
 l <- list()
 for (i in c(1:24)) l[[i]] <- gg_TVPAB_mat(i)
 
@@ -380,7 +385,7 @@ dev.off()
   ab111_q90 <- cbind( apply(beta_reduce_post, MARGIN = c(2,3), FUN = quantile, probs = c(0.9)) )
 
   gg_TVP_redu_AB_mat <- function(i){
-    Time <- tail(seq(as.Date("1997/06/01"), as.Date("2025/03/01"), "quarter"), nrow(ab111_mean))
+    Time <- tail(seq(as.Date("1997/06/01"), as.Date("2025/09/01"), "quarter"), nrow(ab111_mean))
 
     data_nu <- data.frame(Time = Time, AB_mean = ab111_mean[,i])
 
@@ -434,7 +439,7 @@ dev.off()
   rho111_q90 <- ( apply(rho_reduce_post, MARGIN = c(2,3), FUN = quantile, probs = c(0.9)) )
   varname <- parse(text = c("rho[paste(2, ",", 1)]", "rho[paste(3, ",", 1)]", "rho[paste(3, ",", 2)]"))
   gg_H_mat <- function(i){
-    Time <- tail(seq(as.Date("1997/06/01"), as.Date("2025/03/01"), "quarter"), nrow(rho111_mean))
+    Time <- tail(seq(as.Date("1997/06/01"), as.Date("2025/09/01"), "quarter"), nrow(rho111_mean))
 
     data_nu <- data.frame(Time = Time, H_mean = rho111_mean[,i])
 
@@ -465,19 +470,19 @@ dev.off()
 
 
 ####################################################################
-load("T000.RData")
+load("T110.RData")
 
-h000_mean <- ( apply((get_post(T000_obj,element = "h")), MARGIN = c(2,3), FUN = mean))
-h000_q10 <- ( apply((get_post(T000_obj,element = "h")), MARGIN = c(2,3), FUN = quantile, probs = c(0.1)))
-h000_q90 <- ( apply((get_post(T000_obj,element = "h")), MARGIN = c(2,3), FUN = quantile, probs = c(0.9)) )
+h000_mean <- ( apply((get_post(T110_obj,element = "h")), MARGIN = c(2,3), FUN = mean))
+h000_q10 <- ( apply((get_post(T110_obj,element = "h")), MARGIN = c(2,3), FUN = quantile, probs = c(0.1)))
+h000_q90 <- ( apply((get_post(T110_obj,element = "h")), MARGIN = c(2,3), FUN = quantile, probs = c(0.9)) )
 
-# h000_mean <- ( apply(exp(get_post(T000_obj,element = "h")), MARGIN = c(2,3), FUN = mean))
-# h000_q10 <- ( apply(exp(get_post(T000_obj,element = "h")), MARGIN = c(2,3), FUN = quantile, probs = c(0.1)))
-# h000_q90 <- ( apply(exp(get_post(T000_obj,element = "h")), MARGIN = c(2,3), FUN = quantile, probs = c(0.9)) )
+# h000_mean <- ( apply(exp(get_post(T110_obj,element = "h")), MARGIN = c(2,3), FUN = mean))
+# h000_q10 <- ( apply(exp(get_post(T110_obj,element = "h")), MARGIN = c(2,3), FUN = quantile, probs = c(0.1)))
+# h000_q90 <- ( apply(exp(get_post(T110_obj,element = "h")), MARGIN = c(2,3), FUN = quantile, probs = c(0.9)) )
 
 varname <- c("EPU", "Unemployment", "GDP growth")
 gg_H_mat <- function(i){
-  Time <- tail(seq(as.Date("1997/06/01"), as.Date("2025/03/01"), "quarter"), nrow(h000_mean))
+  Time <- tail(seq(as.Date("1997/06/01"), as.Date("2025/09/01"), "quarter"), nrow(h000_mean))
 
   data_nu <- data.frame(Time = Time, H_mean = h000_mean[,i])
 
@@ -497,26 +502,26 @@ l <- list()
 for (i in c(1:3)) l[[i]] <- gg_H_mat(i)
 
 
-pdf(file='img/postHT000.pdf', width = 9, height = 6)
+pdf(file='img/postHT110.pdf', width = 9, height = 6)
 plot_grid(l[[1]], l[[2]], l[[3]],
           ncol = 1, align = "v")
 #grid.arrange(p1, p2, p3, nrow = 3, ncol = 1)
 dev.off()
 
 ####################################################################
-load("T000.RData")
+load("T110.RData")
 
-h000_mean <- ( apply(exp(get_post(T000_obj,element = "h")), MARGIN = c(2,3), FUN = mean))
-h000_q10 <- ( apply(exp(get_post(T000_obj,element = "h")), MARGIN = c(2,3), FUN = quantile, probs = c(0.1)))
-h000_q90 <- ( apply(exp(get_post(T000_obj,element = "h")), MARGIN = c(2,3), FUN = quantile, probs = c(0.9)) )
+h000_mean <- ( apply(exp(get_post(T110_obj,element = "h")), MARGIN = c(2,3), FUN = mean))
+h000_q10 <- ( apply(exp(get_post(T110_obj,element = "h")), MARGIN = c(2,3), FUN = quantile, probs = c(0.1)))
+h000_q90 <- ( apply(exp(get_post(T110_obj,element = "h")), MARGIN = c(2,3), FUN = quantile, probs = c(0.9)) )
 
-# h000_mean <- ( apply(exp(get_post(T000_obj,element = "h")), MARGIN = c(2,3), FUN = mean))
-# h000_q10 <- ( apply(exp(get_post(T000_obj,element = "h")), MARGIN = c(2,3), FUN = quantile, probs = c(0.1)))
-# h000_q90 <- ( apply(exp(get_post(T000_obj,element = "h")), MARGIN = c(2,3), FUN = quantile, probs = c(0.9)) )
+# h000_mean <- ( apply(exp(get_post(T110_obj,element = "h")), MARGIN = c(2,3), FUN = mean))
+# h000_q10 <- ( apply(exp(get_post(T110_obj,element = "h")), MARGIN = c(2,3), FUN = quantile, probs = c(0.1)))
+# h000_q90 <- ( apply(exp(get_post(T110_obj,element = "h")), MARGIN = c(2,3), FUN = quantile, probs = c(0.9)) )
 
 varname <- c("EPU", "Unemployment", "GDP growth")
 gg_H_mat <- function(i){
-  Time <- tail(seq(as.Date("1997/06/01"), as.Date("2025/03/01"), "quarter"), nrow(h000_mean))
+  Time <- tail(seq(as.Date("1997/06/01"), as.Date("2025/09/01"), "quarter"), nrow(h000_mean))
 
   data_nu <- data.frame(Time = Time, H_mean = h000_mean[,i])
 
@@ -537,26 +542,26 @@ for (i in c(1:3)) l[[i]] <- gg_H_mat(i)
 
 library(cowplot)
 
-pdf(file='img/poststructureHT000.pdf', width = 9, height = 6)
+pdf(file='img/poststructureHT110.pdf', width = 9, height = 6)
 plot_grid(l[[1]], l[[2]], l[[3]],
           ncol = 1, align = "v")
 #grid.arrange(p1, p2, p3, nrow = 3, ncol = 1)
 dev.off()
 
 ####################################################################
-load("T000.RData")
+load("T110.RData")
 
-h000_mean <- ( apply(exp(get_post(T000_obj,element = "h")), MARGIN = c(2,3), FUN = mean))
-h000_q10 <- ( apply(exp(get_post(T000_obj,element = "h")), MARGIN = c(2,3), FUN = quantile, probs = c(0.1)))
-h000_q90 <- ( apply(exp(get_post(T000_obj,element = "h")), MARGIN = c(2,3), FUN = quantile, probs = c(0.9)) )
+h000_mean <- ( apply(exp(get_post(T110_obj,element = "h")), MARGIN = c(2,3), FUN = mean))
+h000_q10 <- ( apply(exp(get_post(T110_obj,element = "h")), MARGIN = c(2,3), FUN = quantile, probs = c(0.1)))
+h000_q90 <- ( apply(exp(get_post(T110_obj,element = "h")), MARGIN = c(2,3), FUN = quantile, probs = c(0.9)) )
 
-# h000_mean <- ( apply(exp(get_post(T000_obj,element = "h")), MARGIN = c(2,3), FUN = mean))
-# h000_q10 <- ( apply(exp(get_post(T000_obj,element = "h")), MARGIN = c(2,3), FUN = quantile, probs = c(0.1)))
-# h000_q90 <- ( apply(exp(get_post(T000_obj,element = "h")), MARGIN = c(2,3), FUN = quantile, probs = c(0.9)) )
+# h000_mean <- ( apply(exp(get_post(T110_obj,element = "h")), MARGIN = c(2,3), FUN = mean))
+# h000_q10 <- ( apply(exp(get_post(T110_obj,element = "h")), MARGIN = c(2,3), FUN = quantile, probs = c(0.1)))
+# h000_q90 <- ( apply(exp(get_post(T110_obj,element = "h")), MARGIN = c(2,3), FUN = quantile, probs = c(0.9)) )
 
 varname <- c("EPU", "Unemployment", "GDP growth")
 gg_H_mat <- function(i){
-  Time <- tail(seq(as.Date("1997/06/01"), as.Date("2025/03/01"), "quarter"), nrow(h000_mean))
+  Time <- tail(seq(as.Date("1997/06/01"), as.Date("2025/09/01"), "quarter"), nrow(h000_mean))
 
   data_nu <- data.frame(Time = Time, H_mean = h000_mean[,i])
 
@@ -682,25 +687,25 @@ get_ht <- function(Chain, atT = NULL, n.ahead = 0, structure = TRUE){
   return(list(H.chol = out_all )  )
 }
 
-T000_diagH_stdS <- parallel::mclapply(c(1:nrow(T000_obj$data$y)),
+T110_diagH_stdS <- parallel::mclapply(c(1:nrow(T110_obj$data$y)),
                                       FUN = function(atT) {
-                                        get_ht(Chain = T000_obj,
+                                        get_ht(Chain = T110_obj,
                                                atT = atT, structure = TRUE)$H.chol
                                       },
                                       mc.cores = 16)
-T000_diagH_stdS_structure <- array(NA, dim = dim(get_post(T000_obj,element = "h")))
+T110_diagH_stdS_structure <- array(NA, dim = dim(get_post(T110_obj,element = "h")))
 atT <- nrow(y)
 for (t in c(1: (atT) )){
-  T000_diagH_stdS_structure[,t,] <- t(T000_diagH_stdS[[t]])
+  T110_diagH_stdS_structure[,t,] <- t(T110_diagH_stdS[[t]])
 }
 
-h000_mean <- ( apply(T000_diagH_stdS_structure, MARGIN = c(2,3), FUN = mean, na.rm = T))
-h000_q10 <- ( apply(T000_diagH_stdS_structure, MARGIN = c(2,3), FUN = quantile, probs = c(0.1), na.rm = T))
-h000_q90 <- ( apply(T000_diagH_stdS_structure, MARGIN = c(2,3), FUN = quantile, probs = c(0.9), na.rm = T) )
+h000_mean <- ( apply(T110_diagH_stdS_structure, MARGIN = c(2,3), FUN = mean, na.rm = T))
+h000_q10 <- ( apply(T110_diagH_stdS_structure, MARGIN = c(2,3), FUN = quantile, probs = c(0.1), na.rm = T))
+h000_q90 <- ( apply(T110_diagH_stdS_structure, MARGIN = c(2,3), FUN = quantile, probs = c(0.9), na.rm = T) )
 
 varname <- c("EPU", "Unemployment", "GDP growth")
 gg_H_mat <- function(i){
-  Time <- tail(seq(as.Date("1997/06/01"), as.Date("2025/03/01"), "quarter"), nrow(h000_mean))
+  Time <- tail(seq(as.Date("1997/06/01"), as.Date("2025/09/01"), "quarter"), nrow(h000_mean))
 
   data_nu <- data.frame(Time = Time, H_mean = h000_mean[,i])
 
