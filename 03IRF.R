@@ -47,10 +47,10 @@ library(fattvpVAR)
   }
 }
 
-load("/home/hoanguc3m/Downloads/htvpAU/T110.RData")
+load("/home/hoanguc3m/Downloads/htvpAU/T010.RData")
 
-Chain <- T110_obj
-atT <- nrow(T110_obj$data$y) # max
+Chain <- T010_obj
+atT <- nrow(T010_obj$data$y) # max
 n.ahead <- 20
 
 get_irf_tvp_stdS <- function(Chain, impulse.variable = 1, response.variable = 2,
@@ -305,9 +305,9 @@ get_irf_tvp_unitS <- function(Chain, impulse.variable = 1, response.variable = 2
 
 RhpcBLASctl::blas_set_num_threads(1)
 
-T110_IR_12_stdS <- parallel::mclapply(c(1:nrow(T110_obj$data$y)),
+T010_IR_12_stdS <- parallel::mclapply(c(1:nrow(T010_obj$data$y)),
                                       FUN = function(atT) {
-                                        get_irf_tvp_stdS(Chain = T110_obj,
+                                        get_irf_tvp_stdS(Chain = T010_obj,
                                                          impulse.variable = 1,
                                                          response.variable = 2,
                                                          n.ahead = n.ahead,
@@ -315,9 +315,9 @@ T110_IR_12_stdS <- parallel::mclapply(c(1:nrow(T110_obj$data$y)),
                                       },
                                       mc.cores = 16)
 
-T110_IR_12_unitS <- parallel::mclapply(c(1:nrow(T110_obj$data$y)),
+T010_IR_12_unitS <- parallel::mclapply(c(1:nrow(T010_obj$data$y)),
                                        FUN = function(atT) {
-                                         get_irf_tvp_unitS(Chain = T110_obj,
+                                         get_irf_tvp_unitS(Chain = T010_obj,
                                                            impulse.variable = 1,
                                                            response.variable = 2,
                                                            n.ahead = n.ahead,
@@ -326,89 +326,91 @@ T110_IR_12_unitS <- parallel::mclapply(c(1:nrow(T110_obj$data$y)),
                                        mc.cores = 16)
 
 
-save(T110_IR_12_stdS,
-     T110_IR_12_unitS,
-     file = "/home/hoanguc3m/Downloads/htvpAU/Impulse/T110_models_IRF_new.RData")
+save(T010_IR_12_stdS,
+     T010_IR_12_unitS,
+     file = "/home/hoanguc3m/Downloads/htvpAU/Impulse/T010_models_IRF_new.RData")
 
 
-t_max <- nrow(T110_obj$data$y)
+t_max <- nrow(T010_obj$data$y)
 Time <- seq(as.Date("1997/06/01"), as.Date("2025/09/01"), "quarter")
 K <- 3
 
-T110_stdS_12_irf_matrix <- array(NA, dim = c(K,K,n.ahead+1, t_max))
-T110_unitS_12_irf_matrix <- array(NA, dim = c(K,K,n.ahead+1, t_max))
+T010_stdS_12_irf_matrix <- array(NA, dim = c(K,K,n.ahead+1, t_max))
+T010_unitS_12_irf_matrix <- array(NA, dim = c(K,K,n.ahead+1, t_max))
 
 T_range <- 1:t_max
 D_range <- tail(Time, t_max)
 for (atT in c(1:t_max)){
-  T110_stdS_12_irf_matrix[,,,atT] <- T110_IR_12_stdS[[atT]]
-  T110_unitS_12_irf_matrix[,,,atT] <- T110_IR_12_unitS[[atT]]
+  T010_stdS_12_irf_matrix[,,,atT] <- T010_IR_12_stdS[[atT]]
+  T010_unitS_12_irf_matrix[,,,atT] <- T010_IR_12_unitS[[atT]]
 }
 
 
 library(plotly)
 setwd("/home/hoanguc3m/Dropbox/WP11/Code/htvpAU/img/IR")
 
-##################################
+{
+  ##################################
 
-fig <- plot_ly(x = D_range,
-               y = c(0:n.ahead),
-               z = T110_unitS_12_irf_matrix[1,1,,T_range]) %>% add_surface() %>% layout(title = "",scene = list(xaxis = list(title = ""),yaxis = list(title = ""),zaxis = list(title = "") ))
+  fig <- plot_ly(x = D_range,
+                 y = c(0:n.ahead),
+                 z = T010_stdS_12_irf_matrix[1,1,,T_range]) %>% add_surface() %>% layout(title = "",scene = list(xaxis = list(title = ""),yaxis = list(title = ""),zaxis = list(title = "") ))
 
-fig <- plot_ly(x = D_range,
-               y = c(0:n.ahead),
-               z = T110_unitS_12_irf_matrix[1,1,,T_range]) %>% add_surface() %>% layout(title = "",scene = list(xaxis = list(title = ""),yaxis = list(title = ""),zaxis = list(title = "") ))
-htmlwidgets::saveWidget(fig, file = "Model-T110-SV-UnitS-Imp1-Res1.html")
+  fig <- plot_ly(x = D_range,
+                 y = c(0:n.ahead),
+                 z = T010_stdS_12_irf_matrix[1,1,,T_range]) %>% add_surface() %>% layout(title = "",scene = list(xaxis = list(title = ""),yaxis = list(title = ""),zaxis = list(title = "") ))
+  htmlwidgets::saveWidget(fig, file = "Model-T010-SV-stdS-Imp1-Res1.html")
 
-fig <- plot_ly(x = D_range,
-               y = c(0:n.ahead),
-               z = T110_unitS_12_irf_matrix[2,1,,T_range]) %>% add_surface() %>% layout(title = "",scene = list(xaxis = list(title = ""),yaxis = list(title = ""),zaxis = list(title = "") ))
-htmlwidgets::saveWidget(fig, file = "Model-T110-SV-UnitS-Imp1-Res2.html")
+  fig <- plot_ly(x = D_range,
+                 y = c(0:n.ahead),
+                 z = T010_stdS_12_irf_matrix[2,1,,T_range]) %>% add_surface() %>% layout(title = "",scene = list(xaxis = list(title = ""),yaxis = list(title = ""),zaxis = list(title = "") ))
+  htmlwidgets::saveWidget(fig, file = "Model-T010-SV-stdS-Imp1-Res2.html")
 
-fig <- plot_ly(x = D_range,
-               y = c(0:n.ahead),
-               z = T110_unitS_12_irf_matrix[3,1,,T_range]) %>% add_surface() %>% layout(title = "",scene = list(xaxis = list(title = ""),yaxis = list(title = ""),zaxis = list(title = "") ))
-htmlwidgets::saveWidget(fig, file = "Model-T110-SV-UnitS-Imp1-Res3.html")
+  fig <- plot_ly(x = D_range,
+                 y = c(0:n.ahead),
+                 z = T010_stdS_12_irf_matrix[3,1,,T_range]) %>% add_surface() %>% layout(title = "",scene = list(xaxis = list(title = ""),yaxis = list(title = ""),zaxis = list(title = "") ))
+  htmlwidgets::saveWidget(fig, file = "Model-T010-SV-stdS-Imp1-Res3.html")
 
-####
-
-
-setwd("/home/hoanguc3m/Dropbox/WP11/Code/htvpAU/img/IR")
-
-# T110_unitS_12_irf_matrix <- T110_unitS_12_irf_matrix[,,1:(1+n.ahead),]
-
-fig <- plot_ly(x = D_range,
-               y = c(0:n.ahead),
-               z = T110_unitS_12_irf_matrix[1,3,,T_range]) %>% add_surface() %>% layout(title = "",scene = list(xaxis = list(title = ""),yaxis = list(title = ""),zaxis = list(title = "") ))
-htmlwidgets::saveWidget(fig, file = "Model-T110-SV-UnitS-Imp3-Res1.html")
-
-fig <- plot_ly(x = D_range,
-               y = c(0:n.ahead),
-               z = T110_unitS_12_irf_matrix[2,3,,T_range]) %>% add_surface() %>% layout(title = "",scene = list(xaxis = list(title = ""),yaxis = list(title = ""),zaxis = list(title = "") ))
-htmlwidgets::saveWidget(fig, file = "Model-T110-SV-UnitS-Imp3-Res2.html")
-
-fig <- plot_ly(x = D_range,
-               y = c(0:n.ahead),
-               z = T110_unitS_12_irf_matrix[3,3,,T_range]) %>% add_surface() %>% layout(title = "",scene = list(xaxis = list(title = ""),yaxis = list(title = ""),zaxis = list(title = "") ))
-htmlwidgets::saveWidget(fig, file = "Model-T110-SV-UnitS-Imp3-Res3.html")
+  ####
 
 
+  setwd("/home/hoanguc3m/Dropbox/WP11/Code/htvpAU/img/IR")
 
-fig <- plot_ly(x = D_range,
-               y = c(0:n.ahead),
-               z = T110_unitS_12_irf_matrix[1,2,,T_range]) %>% add_surface() %>% layout(title = "",scene = list(xaxis = list(title = ""),yaxis = list(title = ""),zaxis = list(title = "") ))
-htmlwidgets::saveWidget(fig, file = "Model-T110-SV-UnitS-Imp2-Res1.html")
+  # T010_stdS_12_irf_matrix <- T010_stdS_12_irf_matrix[,,1:(1+n.ahead),]
 
-fig <- plot_ly(x = D_range,
-               y = c(0:n.ahead),
-               z = T110_unitS_12_irf_matrix[2,2,,T_range]) %>% add_surface() %>% layout(title = "",scene = list(xaxis = list(title = ""),yaxis = list(title = ""),zaxis = list(title = "") ))
-htmlwidgets::saveWidget(fig, file = "Model-T110-SV-UnitS-Imp2-Res2.html")
+  fig <- plot_ly(x = D_range,
+                 y = c(0:n.ahead),
+                 z = T010_stdS_12_irf_matrix[1,3,,T_range]) %>% add_surface() %>% layout(title = "",scene = list(xaxis = list(title = ""),yaxis = list(title = ""),zaxis = list(title = "") ))
+  htmlwidgets::saveWidget(fig, file = "Model-T010-SV-stdS-Imp3-Res1.html")
 
-fig <- plot_ly(x = D_range,
-               y = c(0:n.ahead),
-               z = T110_unitS_12_irf_matrix[3,2,,T_range]) %>% add_surface() %>% layout(title = "",scene = list(xaxis = list(title = ""),yaxis = list(title = ""),zaxis = list(title = "") ))
-htmlwidgets::saveWidget(fig, file = "Model-T110-SV-UnitS-Imp2-Res3.html")
+  fig <- plot_ly(x = D_range,
+                 y = c(0:n.ahead),
+                 z = T010_stdS_12_irf_matrix[2,3,,T_range]) %>% add_surface() %>% layout(title = "",scene = list(xaxis = list(title = ""),yaxis = list(title = ""),zaxis = list(title = "") ))
+  htmlwidgets::saveWidget(fig, file = "Model-T010-SV-stdS-Imp3-Res2.html")
 
+  fig <- plot_ly(x = D_range,
+                 y = c(0:n.ahead),
+                 z = T010_stdS_12_irf_matrix[3,3,,T_range]) %>% add_surface() %>% layout(title = "",scene = list(xaxis = list(title = ""),yaxis = list(title = ""),zaxis = list(title = "") ))
+  htmlwidgets::saveWidget(fig, file = "Model-T010-SV-stdS-Imp3-Res3.html")
+
+
+
+  fig <- plot_ly(x = D_range,
+                 y = c(0:n.ahead),
+                 z = T010_stdS_12_irf_matrix[1,2,,T_range]) %>% add_surface() %>% layout(title = "",scene = list(xaxis = list(title = ""),yaxis = list(title = ""),zaxis = list(title = "") ))
+  htmlwidgets::saveWidget(fig, file = "Model-T010-SV-stdS-Imp2-Res1.html")
+
+  fig <- plot_ly(x = D_range,
+                 y = c(0:n.ahead),
+                 z = T010_stdS_12_irf_matrix[2,2,,T_range]) %>% add_surface() %>% layout(title = "",scene = list(xaxis = list(title = ""),yaxis = list(title = ""),zaxis = list(title = "") ))
+  htmlwidgets::saveWidget(fig, file = "Model-T010-SV-stdS-Imp2-Res2.html")
+
+  fig <- plot_ly(x = D_range,
+                 y = c(0:n.ahead),
+                 z = T010_stdS_12_irf_matrix[3,2,,T_range]) %>% add_surface() %>% layout(title = "",scene = list(xaxis = list(title = ""),yaxis = list(title = ""),zaxis = list(title = "") ))
+  htmlwidgets::saveWidget(fig, file = "Model-T010-SV-stdS-Imp2-Res3.html")
+
+}
 ###############################
 {
   library(ggplot2)
@@ -436,55 +438,55 @@ htmlwidgets::saveWidget(fig, file = "Model-T110-SV-UnitS-Imp2-Res3.html")
   }
 }
 
-#Model T110
+#Model T010
 n.ahead <- 20
 atT <- 112
 D_range[atT]
-p1 <- impres2dplotv2(tmp = get_irf_tvp_unitS(Chain = T110_obj,
+p1 <- impres2dplotv2(tmp = get_irf_tvp_unitS(Chain = T010_obj,
                                              impulse.variable = 1, response.variable = 1,
                                              n.ahead = n.ahead, atT = atT),
                      name = "EPU", cid = "EPU") ; p1
 
-p2 <- impres2dplotv2(tmp = get_irf_tvp_unitS(Chain = T110_obj,
+p2 <- impres2dplotv2(tmp = get_irf_tvp_unitS(Chain = T010_obj,
                                              impulse.variable = 1, response.variable = 2,
                                              n.ahead = n.ahead, atT = atT),
                      name = "", cid = "Unemployment") ; p2
-p3 <- impres2dplotv2(tmp = get_irf_tvp_unitS(Chain = T110_obj,
+p3 <- impres2dplotv2(tmp = get_irf_tvp_unitS(Chain = T010_obj,
                                              impulse.variable = 1, response.variable = 3,
                                              n.ahead = n.ahead, atT = atT),
                      name = "", cid = "GDP growth") ; p3
 
-p4 <- impres2dplotv2(tmp = get_irf_tvp_unitS(Chain = T110_obj,
+p4 <- impres2dplotv2(tmp = get_irf_tvp_unitS(Chain = T010_obj,
                                              impulse.variable = 2, response.variable = 1,
                                              n.ahead = n.ahead, atT = atT),
                      name = "Unemployment") ; p4
 
 
-p5 <- impres2dplotv2(tmp = get_irf_tvp_unitS(Chain = T110_obj,
+p5 <- impres2dplotv2(tmp = get_irf_tvp_unitS(Chain = T010_obj,
                                              impulse.variable = 2, response.variable = 2,
                                              n.ahead = n.ahead, atT = atT),
                      name = "") ; p5
 
-p6 <- impres2dplotv2(tmp = get_irf_tvp_unitS(Chain = T110_obj,
+p6 <- impres2dplotv2(tmp = get_irf_tvp_unitS(Chain = T010_obj,
                                              impulse.variable = 2, response.variable = 3,
                                              n.ahead = n.ahead, atT = atT),
                      name = "") ; p6
 
-p7 <- impres2dplotv2(tmp = get_irf_tvp_unitS(Chain = T110_obj,
+p7 <- impres2dplotv2(tmp = get_irf_tvp_unitS(Chain = T010_obj,
                                              impulse.variable = 3, response.variable = 1,
                                              n.ahead = n.ahead, atT = atT),
                      name = "GDP growth") ; p7
 
-p8 <- impres2dplotv2(tmp = get_irf_tvp_unitS(Chain = T110_obj,
+p8 <- impres2dplotv2(tmp = get_irf_tvp_unitS(Chain = T010_obj,
                                              impulse.variable = 3, response.variable = 2,
                                              n.ahead = n.ahead, atT = atT),
                      name = "") ; p8
-p9 <- impres2dplotv2(tmp = get_irf_tvp_unitS(Chain = T110_obj,
+p9 <- impres2dplotv2(tmp = get_irf_tvp_unitS(Chain = T010_obj,
                                              impulse.variable = 3, response.variable = 3,
                                              n.ahead = n.ahead, atT = atT),
                      name = "") ; p9
 
-png(filename='/home/hoanguc3m/Dropbox/WP11/Code/htvpAU/img/IR/IRF_T110_unit_2025Q3.png', width = 1200*0.6, height = 1200*0.6)
+png(filename='/home/hoanguc3m/Dropbox/WP11/Code/htvpAU/img/IR/IRF_T010_unit_2025Q3.png', width = 1200*0.6, height = 1200*0.6)
 #plot_grid(p12, bottom_row, labels = c('', ''), ncol = 1)
 par(mar=c(2,1,3,5))
 grid.arrange( p1, p2, p3,
@@ -494,55 +496,55 @@ grid.arrange( p1, p2, p3,
 dev.off()
 
 #######################################
-#Model G110
+#Model G010
 n.ahead <- 20
 atT <- 112
 D_range[atT]
-p1 <- impres2dplotv2(tmp = get_irf_tvp_unitS(Chain = G110_obj,
+p1 <- impres2dplotv2(tmp = get_irf_tvp_unitS(Chain = G010_obj,
                                              impulse.variable = 1, response.variable = 1,
                                              n.ahead = n.ahead, atT = atT),
                      name = "EPU", cid = "EPU") ; p1
 
-p2 <- impres2dplotv2(tmp = get_irf_tvp_unitS(Chain = G110_obj,
+p2 <- impres2dplotv2(tmp = get_irf_tvp_unitS(Chain = G010_obj,
                                              impulse.variable = 1, response.variable = 2,
                                              n.ahead = n.ahead, atT = atT),
                      name = "", cid = "Unemployment") ; p2
-p3 <- impres2dplotv2(tmp = get_irf_tvp_unitS(Chain = G110_obj,
+p3 <- impres2dplotv2(tmp = get_irf_tvp_unitS(Chain = G010_obj,
                                              impulse.variable = 1, response.variable = 3,
                                              n.ahead = n.ahead, atT = atT),
                      name = "", cid = "GDP growth") ; p3
 
-p4 <- impres2dplotv2(tmp = get_irf_tvp_unitS(Chain = G110_obj,
+p4 <- impres2dplotv2(tmp = get_irf_tvp_unitS(Chain = G010_obj,
                                              impulse.variable = 2, response.variable = 1,
                                              n.ahead = n.ahead, atT = atT),
                      name = "Unemployment") ; p4
 
 
-p5 <- impres2dplotv2(tmp = get_irf_tvp_unitS(Chain = G110_obj,
+p5 <- impres2dplotv2(tmp = get_irf_tvp_unitS(Chain = G010_obj,
                                              impulse.variable = 2, response.variable = 2,
                                              n.ahead = n.ahead, atT = atT),
                      name = "") ; p5
 
-p6 <- impres2dplotv2(tmp = get_irf_tvp_unitS(Chain = G110_obj,
+p6 <- impres2dplotv2(tmp = get_irf_tvp_unitS(Chain = G010_obj,
                                              impulse.variable = 2, response.variable = 3,
                                              n.ahead = n.ahead, atT = atT),
                      name = "") ; p6
 
-p7 <- impres2dplotv2(tmp = get_irf_tvp_unitS(Chain = G110_obj,
+p7 <- impres2dplotv2(tmp = get_irf_tvp_unitS(Chain = G010_obj,
                                              impulse.variable = 3, response.variable = 1,
                                              n.ahead = n.ahead, atT = atT),
                      name = "GDP growth") ; p7
 
-p8 <- impres2dplotv2(tmp = get_irf_tvp_unitS(Chain = G110_obj,
+p8 <- impres2dplotv2(tmp = get_irf_tvp_unitS(Chain = G010_obj,
                                              impulse.variable = 3, response.variable = 2,
                                              n.ahead = n.ahead, atT = atT),
                      name = "") ; p8
-p9 <- impres2dplotv2(tmp = get_irf_tvp_unitS(Chain = G110_obj,
+p9 <- impres2dplotv2(tmp = get_irf_tvp_unitS(Chain = G010_obj,
                                              impulse.variable = 3, response.variable = 3,
                                              n.ahead = n.ahead, atT = atT),
                      name = "") ; p9
 
-png(filename='/home/hoanguc3m/Dropbox/WP11/Code/htvpAU/img/IR/IRF_G110_unit_2025Q3.png', width = 1200*0.6, height = 1200*0.6)
+png(filename='/home/hoanguc3m/Dropbox/WP11/Code/htvpAU/img/IR/IRF_G010_unit_2025Q3.png', width = 1200*0.6, height = 1200*0.6)
 #plot_grid(p12, bottom_row, labels = c('', ''), ncol = 1)
 par(mar=c(2,1,3,5))
 grid.arrange( p1, p2, p3,

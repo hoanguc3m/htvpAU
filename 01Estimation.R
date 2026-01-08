@@ -34,7 +34,7 @@ priors$b0 <- as.numeric(t(B0))
 
 lambda1 <- 0.2
 lambda2 <- 0.5
-lambda2a <- 0.05
+lambda2a <- 0.000001
 lambda3 <- 1
 lambda4 <- 10
 
@@ -72,7 +72,8 @@ V_b_prior = as.numeric(t(matrix(Vi, nrow = K)))
 priors$V_b_prior <- V_b_prior
 priors$V_a0_prior <- rep(0.01,length(priors$a0))
 priors$hyper_ab <- list(hyper_a = rep(0.0001, 3),
-                        hyper_b = rep(0.0001,21))
+                        hyper_b = c(c(1e-4,1e-4,1e-10,1e-10,1e-4,1e-10,1e-10),
+                                    rep(0.0001,21)) )
 
 #################################
 inits <- list(samples = 100000, burnin = 20000, thin = 20)
@@ -127,8 +128,8 @@ setwd("/home/hoanguc3m/Downloads/htvpAU")
   inits$is_tv = c(1,0,0); T100_obj <- fitTVPStudentSV_ASIS(y, y0, p, priors, inits)
   save(T100_obj, file = "T100.RData")
 
-  inits$is_tv = c(1,1,0); T110_obj <- fitTVPStudentSV_ASIS(y, y0, p, priors, inits)
-  save(T110_obj, file = "T110.RData")
+  inits$is_tv = c(1,1,0); T010_obj <- fitTVPStudentSV_ASIS(y, y0, p, priors, inits)
+  save(T010_obj, file = "T010.RData")
 
   inits$is_tv = c(0,1,1); T011_obj <- fitTVPStudentSV_ASIS(y, y0, p, priors, inits)
   save(T011_obj, file = "T011.RData")
@@ -176,6 +177,7 @@ p3 <- ggplot(data_nu, aes(x = Time, y = GDP)) +
   geom_line(color = "#e3625b") + xlab("GDP growth") + ylab("") +
   geom_rect(data=recessions.df, inherit.aes=F, aes(xmin=Peak, xmax=Trough, ymin=-Inf, ymax=+Inf), fill='darkgray', alpha=0.5) + theme_bw()
 
+setwd("/home/hoanguc3m/Dropbox/WP11/Code/htvpAU/")
 pdf(file='img/data.pdf', width = 8.1, height = 5.4)
 plot_grid(p1, p2, p3, ncol = 1, align = "v")
 #grid.arrange(p1, p2, p3, nrow = 3, ncol = 1)
@@ -470,15 +472,15 @@ dev.off()
 
 
 ####################################################################
-load("T110.RData")
+load("T010.RData")
 
-h000_mean <- ( apply((get_post(T110_obj,element = "h")), MARGIN = c(2,3), FUN = mean))
-h000_q10 <- ( apply((get_post(T110_obj,element = "h")), MARGIN = c(2,3), FUN = quantile, probs = c(0.1)))
-h000_q90 <- ( apply((get_post(T110_obj,element = "h")), MARGIN = c(2,3), FUN = quantile, probs = c(0.9)) )
+h000_mean <- ( apply((get_post(T010_obj,element = "h")), MARGIN = c(2,3), FUN = mean))
+h000_q10 <- ( apply((get_post(T010_obj,element = "h")), MARGIN = c(2,3), FUN = quantile, probs = c(0.1)))
+h000_q90 <- ( apply((get_post(T010_obj,element = "h")), MARGIN = c(2,3), FUN = quantile, probs = c(0.9)) )
 
-# h000_mean <- ( apply(exp(get_post(T110_obj,element = "h")), MARGIN = c(2,3), FUN = mean))
-# h000_q10 <- ( apply(exp(get_post(T110_obj,element = "h")), MARGIN = c(2,3), FUN = quantile, probs = c(0.1)))
-# h000_q90 <- ( apply(exp(get_post(T110_obj,element = "h")), MARGIN = c(2,3), FUN = quantile, probs = c(0.9)) )
+# h000_mean <- ( apply(exp(get_post(T010_obj,element = "h")), MARGIN = c(2,3), FUN = mean))
+# h000_q10 <- ( apply(exp(get_post(T010_obj,element = "h")), MARGIN = c(2,3), FUN = quantile, probs = c(0.1)))
+# h000_q90 <- ( apply(exp(get_post(T010_obj,element = "h")), MARGIN = c(2,3), FUN = quantile, probs = c(0.9)) )
 
 varname <- c("EPU", "Unemployment", "GDP growth")
 gg_H_mat <- function(i){
@@ -502,22 +504,22 @@ l <- list()
 for (i in c(1:3)) l[[i]] <- gg_H_mat(i)
 
 
-pdf(file='img/postHT110.pdf', width = 9, height = 6)
+pdf(file='img/postHT010.pdf', width = 9, height = 6)
 plot_grid(l[[1]], l[[2]], l[[3]],
           ncol = 1, align = "v")
 #grid.arrange(p1, p2, p3, nrow = 3, ncol = 1)
 dev.off()
 
 ####################################################################
-load("T110.RData")
+load("T010.RData")
 
-h000_mean <- ( apply(exp(get_post(T110_obj,element = "h")), MARGIN = c(2,3), FUN = mean))
-h000_q10 <- ( apply(exp(get_post(T110_obj,element = "h")), MARGIN = c(2,3), FUN = quantile, probs = c(0.1)))
-h000_q90 <- ( apply(exp(get_post(T110_obj,element = "h")), MARGIN = c(2,3), FUN = quantile, probs = c(0.9)) )
+h000_mean <- ( apply(exp(get_post(T010_obj,element = "h")), MARGIN = c(2,3), FUN = mean))
+h000_q10 <- ( apply(exp(get_post(T010_obj,element = "h")), MARGIN = c(2,3), FUN = quantile, probs = c(0.1)))
+h000_q90 <- ( apply(exp(get_post(T010_obj,element = "h")), MARGIN = c(2,3), FUN = quantile, probs = c(0.9)) )
 
-# h000_mean <- ( apply(exp(get_post(T110_obj,element = "h")), MARGIN = c(2,3), FUN = mean))
-# h000_q10 <- ( apply(exp(get_post(T110_obj,element = "h")), MARGIN = c(2,3), FUN = quantile, probs = c(0.1)))
-# h000_q90 <- ( apply(exp(get_post(T110_obj,element = "h")), MARGIN = c(2,3), FUN = quantile, probs = c(0.9)) )
+# h000_mean <- ( apply(exp(get_post(T010_obj,element = "h")), MARGIN = c(2,3), FUN = mean))
+# h000_q10 <- ( apply(exp(get_post(T010_obj,element = "h")), MARGIN = c(2,3), FUN = quantile, probs = c(0.1)))
+# h000_q90 <- ( apply(exp(get_post(T010_obj,element = "h")), MARGIN = c(2,3), FUN = quantile, probs = c(0.9)) )
 
 varname <- c("EPU", "Unemployment", "GDP growth")
 gg_H_mat <- function(i){
@@ -542,22 +544,22 @@ for (i in c(1:3)) l[[i]] <- gg_H_mat(i)
 
 library(cowplot)
 
-pdf(file='img/poststructureHT110.pdf', width = 9, height = 6)
+pdf(file='img/poststructureHT010.pdf', width = 9, height = 6)
 plot_grid(l[[1]], l[[2]], l[[3]],
           ncol = 1, align = "v")
 #grid.arrange(p1, p2, p3, nrow = 3, ncol = 1)
 dev.off()
 
 ####################################################################
-load("T110.RData")
+load("T010.RData")
 
-h000_mean <- ( apply(exp(get_post(T110_obj,element = "h")), MARGIN = c(2,3), FUN = mean))
-h000_q10 <- ( apply(exp(get_post(T110_obj,element = "h")), MARGIN = c(2,3), FUN = quantile, probs = c(0.1)))
-h000_q90 <- ( apply(exp(get_post(T110_obj,element = "h")), MARGIN = c(2,3), FUN = quantile, probs = c(0.9)) )
+h000_mean <- ( apply(exp(get_post(T010_obj,element = "h")), MARGIN = c(2,3), FUN = mean))
+h000_q10 <- ( apply(exp(get_post(T010_obj,element = "h")), MARGIN = c(2,3), FUN = quantile, probs = c(0.1)))
+h000_q90 <- ( apply(exp(get_post(T010_obj,element = "h")), MARGIN = c(2,3), FUN = quantile, probs = c(0.9)) )
 
-# h000_mean <- ( apply(exp(get_post(T110_obj,element = "h")), MARGIN = c(2,3), FUN = mean))
-# h000_q10 <- ( apply(exp(get_post(T110_obj,element = "h")), MARGIN = c(2,3), FUN = quantile, probs = c(0.1)))
-# h000_q90 <- ( apply(exp(get_post(T110_obj,element = "h")), MARGIN = c(2,3), FUN = quantile, probs = c(0.9)) )
+# h000_mean <- ( apply(exp(get_post(T010_obj,element = "h")), MARGIN = c(2,3), FUN = mean))
+# h000_q10 <- ( apply(exp(get_post(T010_obj,element = "h")), MARGIN = c(2,3), FUN = quantile, probs = c(0.1)))
+# h000_q90 <- ( apply(exp(get_post(T010_obj,element = "h")), MARGIN = c(2,3), FUN = quantile, probs = c(0.9)) )
 
 varname <- c("EPU", "Unemployment", "GDP growth")
 gg_H_mat <- function(i){
@@ -687,21 +689,21 @@ get_ht <- function(Chain, atT = NULL, n.ahead = 0, structure = TRUE){
   return(list(H.chol = out_all )  )
 }
 
-T110_diagH_stdS <- parallel::mclapply(c(1:nrow(T110_obj$data$y)),
+T010_diagH_stdS <- parallel::mclapply(c(1:nrow(T010_obj$data$y)),
                                       FUN = function(atT) {
-                                        get_ht(Chain = T110_obj,
+                                        get_ht(Chain = T010_obj,
                                                atT = atT, structure = TRUE)$H.chol
                                       },
                                       mc.cores = 16)
-T110_diagH_stdS_structure <- array(NA, dim = dim(get_post(T110_obj,element = "h")))
+T010_diagH_stdS_structure <- array(NA, dim = dim(get_post(T010_obj,element = "h")))
 atT <- nrow(y)
 for (t in c(1: (atT) )){
-  T110_diagH_stdS_structure[,t,] <- t(T110_diagH_stdS[[t]])
+  T010_diagH_stdS_structure[,t,] <- t(T010_diagH_stdS[[t]])
 }
 
-h000_mean <- ( apply(T110_diagH_stdS_structure, MARGIN = c(2,3), FUN = mean, na.rm = T))
-h000_q10 <- ( apply(T110_diagH_stdS_structure, MARGIN = c(2,3), FUN = quantile, probs = c(0.1), na.rm = T))
-h000_q90 <- ( apply(T110_diagH_stdS_structure, MARGIN = c(2,3), FUN = quantile, probs = c(0.9), na.rm = T) )
+h000_mean <- ( apply(T010_diagH_stdS_structure, MARGIN = c(2,3), FUN = mean, na.rm = T))
+h000_q10 <- ( apply(T010_diagH_stdS_structure, MARGIN = c(2,3), FUN = quantile, probs = c(0.1), na.rm = T))
+h000_q90 <- ( apply(T010_diagH_stdS_structure, MARGIN = c(2,3), FUN = quantile, probs = c(0.9), na.rm = T) )
 
 varname <- c("EPU", "Unemployment", "GDP growth")
 gg_H_mat <- function(i){
